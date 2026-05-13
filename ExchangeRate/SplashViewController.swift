@@ -24,6 +24,14 @@ final class SplashViewController: UIViewController {
         setupLayot()
     }
     
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            self.switchToMainScreen()
+        }
+    }
+    
     private func setupLayot() {
         view.addSubview(logoImageView)
         
@@ -32,5 +40,16 @@ final class SplashViewController: UIViewController {
             logoImageView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             logoImageView.widthAnchor.constraint(equalToConstant: 100),
             logoImageView.heightAnchor.constraint(equalToConstant: 100)])
+    }
+    
+    private func switchToMainScreen() {
+        let mainVC = UIViewController()
+        mainVC.view.backgroundColor = .systemBackground
+        
+        guard let window = UIApplication.shared.windows.first else { return }
+        window.rootViewController = mainVC
+        
+        UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil)
+        
     }
 }
