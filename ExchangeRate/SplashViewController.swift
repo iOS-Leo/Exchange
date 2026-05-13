@@ -43,7 +43,7 @@ final class SplashViewController: UIViewController {
     }
     
     private func switchToMainScreen() {
-        let mainVC = UIViewController()
+        let mainVC = ExchangeViewController()
         mainVC.view.backgroundColor = .systemBackground
         
         guard let window = UIApplication.shared.windows.first else { return }
