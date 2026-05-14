@@ -7,7 +7,11 @@
 
 import UIKit
 
-final class ExchangeViewController : UIViewController {
+final class ExchangeViewController : UIViewController{
+    
+    private let viewModel = ExchangeViewModel()
+    
+    
     private let titleLabel: UILabel = {
         let label = UILabel()
         label.text = "Exchange Currency"
@@ -41,6 +45,8 @@ final class ExchangeViewController : UIViewController {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
         setupLayout()
+        viewModel.delegate = self
+        viewModel.loadData()
     }
     
     private func setupLayout() {
@@ -57,10 +63,23 @@ final class ExchangeViewController : UIViewController {
             currencyAmountTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 40) ,
             currencyAmountTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -40),
             currencyAmountTextField.heightAnchor.constraint(equalToConstant: 45),
-                                                           
+            
             resultLabel.topAnchor.constraint(equalTo: currencyAmountTextField.bottomAnchor, constant: 40),
             resultLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor)
             
         ])
+    }
+}
+
+extension ExchangeViewController: ExchangeViewModelDelegate {
+    
+    func didFetchCurrencies(_ rates: [String : Double]) {
+        if let rubRate = rates["RUB"] {
+            resultLabel.text = "1 USD = \(rubRate) RUB"
+        }
+    }
+    
+    func didFailWithError(_ message: String) {
+        resultLabel.text = "Ошибка: \(message)"
     }
 }
