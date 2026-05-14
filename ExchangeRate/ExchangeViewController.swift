@@ -7,79 +7,89 @@
 
 import UIKit
 
-final class ExchangeViewController : UIViewController{
+final class ExchangeViewController : UIViewController {
+    
+    private let tableView: UITableView = {
+        let table = UITableView()
+        table.translatesAutoresizingMaskIntoConstraints = false
+        return table
+    }()
     
     private let viewModel = ExchangeViewModel()
-    
-    
-    private let titleLabel: UILabel = {
-        let label = UILabel()
-        label.text = "Exchange Currency"
-        label.font = .systemFont(ofSize: 28, weight: .bold)
-        label.textAlignment = .center
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
-    }()
-    
-    private let currencyAmountTextField: UITextField = {
-        let textField = UITextField()
-        textField.placeholder = "Введите сумму"
-        textField.borderStyle = .roundedRect
-        textField.keyboardType = .decimalPad
-        textField.textAlignment = .center
-        textField.translatesAutoresizingMaskIntoConstraints = false
-        return textField
-    }()
-    
-    private let resultLabel: UILabel = {
-        let label = UILabel()
-        label.text = ""
-        label.font = .systemFont(ofSize: 24, weight: .medium)
-        label.textColor = .label
-        label.textAlignment = .center
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
-    }()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
-        setupLayout()
-        viewModel.delegate = self
+        setupUI()
+        setupViewModel()
         viewModel.loadData()
     }
     
-    private func setupLayout() {
-        view.addSubview(titleLabel)
-        view.addSubview(currencyAmountTextField)
-        view.addSubview(resultLabel)
+    private func setupUI () {
+        view.backgroundColor = .systemBackground
+        title = "Курс валют"
+        view.addSubview(tableView)
         
-        NSLayoutConstraint.activate ([
-            
-            titleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 40),
-            titleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            
-            currencyAmountTextField.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 30),
-            currencyAmountTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 40) ,
-            currencyAmountTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -40),
-            currencyAmountTextField.heightAnchor.constraint(equalToConstant: 45),
-            
-            resultLabel.topAnchor.constraint(equalTo: currencyAmountTextField.bottomAnchor, constant: 40),
-            resultLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor)
-            
+        NSLayoutConstraint.activate([
+            tableView.topAnchor.constraint(equalTo: view.topAnchor),
+            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
+        tableView.dataSource = self
+        tableView.register(CurrencyCell.self, forCellReuseIdentifier: CurrencyCell.reuseIdentifier)
+    }
+    private func setupViewModel() {
+        viewModel.delegate = self
+    }
+}
+
+extension ExchangeViewController: UITableViewDataSource {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return viewModel.numberOfRows()
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: CurrencyCell.reuseIdentifier, for: indexPath) as? CurrencyCell else {
+            return UITableViewCell()
+        }
+        
+        let code = viewModel.getCurrencyCode(at: indexPath.row)
+        let amount = viewModel.getAmount(at: indexPath.row)
+        
+        cell.configure(with: code, amount: amount)
+        cell.onAmountChanged = { [weak self] newAmount in
+            self?.viewModel.updateAmount(newAmount: newAmount, for: code)
+        }
+        return cell
     }
 }
 
 extension ExchangeViewController: ExchangeViewModelDelegate {
     
+    
+    
     func didFetchCurrencies(_ rates: [String : Double]) {
-        if let rubRate = rates["RUB"] {
-            resultLabel.text = "1 USD = \(rubRate) RUB"
+        
+        if tableView.numberOfRows(inSection: 0) == 0 {
+                tableView.reloadData()
+                return
+            }
+        
+        let visibleIndexPaths = tableView.indexPathsForVisibleRows ?? []
+        for indexPath in visibleIndexPaths {
+            
+            if let cell = tableView.cellForRow(at: indexPath) as? CurrencyCell {
+                
+                if !cell.isFirstResponderInTextField() {
+                    let code = viewModel.getCurrencyCode(at: indexPath.row)
+                    let amount = viewModel.getAmount(at: indexPath.row)
+                    cell.configure(with: code, amount: amount)
+                }
+            }
         }
     }
-    
     func didFailWithError(_ message: String) {
-        resultLabel.text = "Ошибка: \(message)"
+        print("Ошибка: \(message)")
     }
 }

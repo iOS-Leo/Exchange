@@ -44,12 +44,21 @@ final class SplashViewController: UIViewController {
     
     private func switchToMainScreen() {
         let mainVC = ExchangeViewController()
-        mainVC.view.backgroundColor = .systemBackground
+        let navigationController = UINavigationController(rootViewController: mainVC)
         
-        guard let window = UIApplication.shared.windows.first else { return }
-        window.rootViewController = mainVC
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = windowScene.windows.first else {
+            let oldWindow = UIApplication.shared.windows.first
+            oldWindow?.rootViewController = UINavigationController(rootViewController: mainVC)
+            return
+        }
+        window.rootViewController = navigationController
         
-        UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil)
+        
+        UIView.transition(with: window,
+                          duration: 0.5,
+                          options: .transitionCrossDissolve,
+                          animations: nil)
         
     }
 }
